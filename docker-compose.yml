@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  db:
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    container_name: my_sql_server
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=125521789987Ma*
+      - MSSQL_PID=Developer
+    volumes:
+      - sqlvolume:/var/opt/mssql
+
+volumes:
+  sqlvolume:
