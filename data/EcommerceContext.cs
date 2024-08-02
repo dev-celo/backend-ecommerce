@@ -43,16 +43,14 @@ public class EcommerceContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
+        // buscamos o valor da connection string armazenada  nas variáveis de ambiente
+        var connectionString = Environment.GetEnvironmentVariable("DOTNET_CONNECTION_STRING");
         // verificamos se o banco de dados já foi configurado
-        if (optionsBuilder.IsConfigured)
+        if (!optionsBuilder.IsConfigured)
         {
-            // buscamos o valor da connection string armazenada  nas variáveis de ambiente
-            var connectionString = Environment.GetEnvironmentVariable("DOTNET_CONNECTION_STRING");
-
             // usamos o método UseSqlServer e passamos a connectionString para ele
             optionsBuilder.UseSqlServer(connectionString);
         }
-
         base.OnConfiguring(optionsBuilder);
     }
 }
