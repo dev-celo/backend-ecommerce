@@ -1,4 +1,5 @@
 using backend_ecommerce.Models;
+using Auth.Dto;
 
 public class UserRepository
 {
@@ -15,7 +16,7 @@ public class UserRepository
         return query;
     }
 
-    public User GetUser(int id)
+    public User GetUserById(int id)
     {
         try {
             return _context.Users.Find(id);
@@ -28,6 +29,7 @@ public class UserRepository
 
     public User AddUser(User user)
     {
+        user.Access = "User";
         _context.Add(user);
         _context.SaveChanges();
         return user;
@@ -47,6 +49,12 @@ public class UserRepository
         return user;
     }
 
+    public User? GetUserByEmail(string email)
+    {
+        User? existingUser = _context.Users.Where(u => u.Email == email).FirstOrDefault();
+        return existingUser;
+    }
+    
     private void BadRequestResult(string message)
     {
         throw new NotImplementedException();
