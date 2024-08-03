@@ -7,5 +7,7 @@ namespace backend_ecommerce.Models
         public string Email { get; set; }
         public string? PasswordHash { get; set; }
         public ICollection<Order>? Orders { get; set; }
+        public string? Access { get; set; }
+
     }
 }
