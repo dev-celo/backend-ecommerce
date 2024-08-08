@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using backend_ecommerce.Models;
-using Auth.Dto;
 using backend_ecommerce.Services;
+using Auth.Dto;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 [ApiController]
 [Route("[controller]")]
@@ -18,6 +21,8 @@ public class UserController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(Policy = "Admin")]
     public IActionResult GetListUser ()
     {
         var res = _repository.GetListUser();
@@ -25,6 +30,8 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(Policy = "Admin, User")]
     public IActionResult GetUserById(int id)
     {
         var res = _repository.GetUserById(id);
@@ -34,15 +41,22 @@ public class UserController : ControllerBase
         return Ok(res);
     }
 
-    [HttpPost("signup")]
-    public IActionResult AddUser([FromBody] User user)
+    [HttpDelete("{id}")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(Policy = "Admin")]
+    public IActionResult DeleteUser(int id)
     {
-        _repository.AddUser(user);
-        var token = _tokenGenerator.Generate(user);
-        return Created("", new { token });
+        var user = _repository.GetUserById(id);
+        if (user == null) return NotFound();
+
+        _repository.DeleteUser(id);
+        return Ok(new { message = "User deleted" });
     }
 
+
     [HttpPut("{id}")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(Policy = "User")]
     public IActionResult UpdateUser(int id, User updatedUser)
     {
         var res = _repository.UpdateUser(id, updatedUser);
@@ -53,6 +67,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("{login}")]
+    [AllowAnonymous]
     public IActionResult Login(LoginDTORequest loginDTO)
     {
         User? existingUser = _repository.GetUserByEmail(loginDTO.Email);
@@ -62,5 +77,14 @@ public class UserController : ControllerBase
 
         var token = _tokenGenerator.Generate(existingUser);
         return Ok(new { token });
+    }
+    
+    [HttpPost("signup")]
+    [AllowAnonymous]
+    public IActionResult AddUser([FromBody] User user)
+    {
+        _repository.AddUser(user);
+        var token = _tokenGenerator.Generate(user);
+        return Created("", new { token });
     }
 }
