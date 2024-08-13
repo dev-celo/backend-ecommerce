@@ -21,10 +21,12 @@ public class UserRepository
 
     public User GetUserById(int id)
     {
-        try {
+        try
+        {
             return _context.Users.Find(id);
         }
-        catch (Exception ex) {
+        catch (Exception ex)
+        {
             BadRequestResult(ex.Message);
             return null;
         }
@@ -67,27 +69,38 @@ public class UserRepository
         User? existingUser = _context.Users.Where(u => u.Email == email).FirstOrDefault();
         return existingUser;
     }
-    
+
     private void BadRequestResult(string message)
     {
         throw new NotImplementedException();
     }
 
-    public bool ChangePassword(int id, string CurrentPassword, string newPassword)
+    public bool ChangePassword(int id, string currentPassword, string newPassword)
     {
-        var UserFinded = GetUserById(id);
+        var user = GetUserById(id);
 
-        if (UserFinded == null || UserFinded.PasswordHash != newPassword)
+        if (user == null)
         {
-            return false;
+            return false; // Usuário não encontrado
         }
 
-        UserFinded.PasswordHash = newPassword;
-        _context.Update(UserFinded);
+        // Verifica se a senha atual fornecida corresponde ao hash armazenado
+        var passwordHash = CustomPasswordHasher.HashPassword(currentPassword, out _);
+        if (user.PasswordHash != passwordHash)
+        {
+            return false; // Senha atual incorreta
+        }
+
+        // Gera um novo hash para a nova senha
+        user.PasswordHash = CustomPasswordHasher.HashPassword(newPassword, out string newSalt);
+        user.Salt = newSalt; // Atualize o salt no banco de dados
+
+        _context.Update(user);
         _context.SaveChanges();
 
-        return true;
+        return true; // Senha alterada com sucesso
     }
+
 
     public bool UpdatePassword(string email, string newPassword)
     {
@@ -98,26 +111,13 @@ public class UserRepository
             return false; // Usuário não encontrado
         }
 
-        // Gera um novo hash de senha
-        user.PasswordHash = HashPassword(newPassword);
+        // Gera um novo hash e salt para a nova senha
+        user.PasswordHash = CustomPasswordHasher.HashPassword(newPassword, out string newSalt);
+        user.Salt = newSalt; // Atualize o salt no banco de dados
 
-        // Marca o usuário como modificado
         _context.Entry(user).State = EntityState.Modified;
-
-        // Salva as alterações no banco de dados
         _context.SaveChanges();
-        return true;
+
+        return true; // Senha atualizada com sucesso
     }
-
-    private string HashPassword(string password)
-        {
-            using (var sha256 = SHA256.Create())
-            {
-                // Gera o hash da senha
-                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-
-                // Converte o hash em uma string
-                return BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
-            }
-        }
- }
+}
