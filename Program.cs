@@ -13,8 +13,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var app = builder.Build();
-
 // Configuraçoes de conjunto de políticas JWT Authorization
 builder.Services.AddAuthorization(options => 
 {
@@ -23,6 +21,8 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Client", policy => policy.RequireClaim(ClaimTypes.Email));
     options.AddPolicy("SouthAmerica", policy => policy.RequireClaim(ClaimTypes.Country, SouthAmerica.Countries));
 });
+
+var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
