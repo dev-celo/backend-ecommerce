@@ -1,5 +1,8 @@
 using backend_ecommerce.Models;
-using Auth.Dto;
+using System.Text;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+
 
 public class UserRepository
 {
@@ -69,4 +72,52 @@ public class UserRepository
     {
         throw new NotImplementedException();
     }
-}
+
+    public bool ChangePassword(int id, string CurrentPassword, string newPassword)
+    {
+        var UserFinded = GetUserById(id);
+
+        if (UserFinded == null || UserFinded.PasswordHash != newPassword)
+        {
+            return false;
+        }
+
+        UserFinded.PasswordHash = newPassword;
+        _context.Update(UserFinded);
+        _context.SaveChanges();
+
+        return true;
+    }
+
+    public bool UpdatePassword(string email, string newPassword)
+    {
+        // Localiza o usuário pelo email
+        var user = _context.Users.SingleOrDefault(u => u.Email == email);
+        if (user == null)
+        {
+            return false; // Usuário não encontrado
+        }
+
+        // Gera um novo hash de senha
+        user.PasswordHash = HashPassword(newPassword);
+
+        // Marca o usuário como modificado
+        _context.Entry(user).State = EntityState.Modified;
+
+        // Salva as alterações no banco de dados
+        _context.SaveChanges();
+        return true;
+    }
+
+    private string HashPassword(string password)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                // Gera o hash da senha
+                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+
+                // Converte o hash em uma string
+                return BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
+            }
+        }
+ }
