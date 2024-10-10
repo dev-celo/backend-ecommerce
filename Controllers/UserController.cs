@@ -23,7 +23,6 @@ public class UserController : ControllerBase
 
     [HttpGet]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Authorize(Policy = "Admin")]
     public IActionResult GetListUser ()
     {
         var res = _repository.GetListUser();
@@ -72,10 +71,9 @@ public class UserController : ControllerBase
     public IActionResult Login(UserDTO loginDTO)
     {
         User? existingUser = _repository.GetUserByEmail(loginDTO.Email);
-
-        if (existingUser == null) return Unauthorized(new { message = "Credenciais de Login incorretas" });
-        var hash = CustomPasswordHasher.HashPassword(loginDTO.Password, out _);
-        if (hash != existingUser.PasswordHash) return Unauthorized(new { message = "Credenciais de Login incorretas" });
+        if (existingUser == null || !CustomPasswordHasher.VerifyPassword(loginDTO.Password, existingUser.Salt, existingUser.PasswordHash)) {
+            return BadRequest(new { message = "Invalid credentials" });
+        }
 
         var token = _tokenGenerator.Generate(existingUser);
         return Ok(new { token });
@@ -113,7 +111,8 @@ public class UserController : ControllerBase
 
     // Usado quando o usuário deseja alterar a senha enquanto ainda está logado no sistema.
     [HttpPost("change-password")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "User")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(Policy="User")]
     public IActionResult ChangePassword(ChangePasswordDTO changePasswordDTO)
     {
         var UserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);

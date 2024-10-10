@@ -30,4 +30,12 @@ public class CustomPasswordHasher
             return Convert.ToBase64String(hash);
         }
     }
+
+    public static bool VerifyPassword(string enteredPassword, string storedSalt, string storedHash)
+    {
+        // hash da senha digitada usando o salt
+        var hashOfEnteredPassword = HashPasswordWithSalt(enteredPassword, storedSalt);
+        // Comparar o hash da senha digitada com o hash armazenado
+        return hashOfEnteredPassword == storedHash;
+    }
 }
