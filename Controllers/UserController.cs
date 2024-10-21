@@ -65,7 +65,7 @@ public class UserController : ControllerBase
         return Ok(res);
     }
 
-    [HttpPost("{login}")]
+    [HttpPost("login")]
     [AllowAnonymous]
     public IActionResult Login(UserDTO loginDTO)
     {
@@ -109,14 +109,13 @@ public class UserController : ControllerBase
     }
 
     // Usado quando o usuário deseja alterar a senha enquanto ainda está logado no sistema.
-    [HttpPost("change-password")]
+    [HttpPost("change-password/{id}")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     // [Authorize(Policy="User")]
-    public IActionResult ChangePassword(ChangePasswordDTO changePasswordDTO)
+    public IActionResult ChangePassword(int id, ChangePasswordDTO changePasswordDTO)
     {
-        var UserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-
-        if (!_repository.ChangePassword(UserId, changePasswordDTO.CurrentPassword, changePasswordDTO.NewPassword))
+        Boolean passwordChanged = _repository.ChangePassword(id, changePasswordDTO.CurrentPassword, changePasswordDTO.NewPassword);
+        if (passwordChanged == false)
         {
             return BadRequest(new { message = "Senha atual incorreta" });
         }
