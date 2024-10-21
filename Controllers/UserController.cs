@@ -23,7 +23,7 @@ public class UserController : ControllerBase
 
     [HttpGet]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    // [Authorize(Policy = "Admin")]
+    [Authorize(Policy = "User")]
     public IActionResult GetListUser ()
     {
         var res = _repository.GetListUser();
@@ -32,7 +32,7 @@ public class UserController : ControllerBase
 
     [HttpGet("{id}")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    // [Authorize(Policy = "Admin")]
+    [Authorize(Policy = "User")]
     public IActionResult GetUserById(int id)
     {
         var res = _repository.GetUserById(id);
@@ -111,7 +111,7 @@ public class UserController : ControllerBase
     // Usado quando o usuário deseja alterar a senha enquanto ainda está logado no sistema.
     [HttpPost("change-password/{id}")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    // [Authorize(Policy="User")]
+    [Authorize(Policy="User")]
     public IActionResult ChangePassword(int id, ChangePasswordDTO changePasswordDTO)
     {
         Boolean passwordChanged = _repository.ChangePassword(id, changePasswordDTO.CurrentPassword, changePasswordDTO.NewPassword);
