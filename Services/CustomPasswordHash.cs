@@ -36,6 +36,9 @@ public class CustomPasswordHasher
         // hash da senha digitada usando o salt
         var hashOfEnteredPassword = HashPasswordWithSalt(enteredPassword, storedSalt);
         // Comparar o hash da senha digitada com o hash armazenado
-        return hashOfEnteredPassword == storedHash;
+        if (hashOfEnteredPassword != storedHash) {
+            return false;
+        }
+        return true;
     }
 }

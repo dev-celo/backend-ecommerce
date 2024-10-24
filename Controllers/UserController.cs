@@ -15,14 +15,15 @@ public class UserController : ControllerBase
     private readonly UserRepository _repository;
     private readonly TokenGenerator _tokenGenerator;
 
-    public UserController(UserRepository repository)
+    public UserController(UserRepository repository, TokenGenerator tokenGenerator)
     {
         _repository = repository;
-        _tokenGenerator = new TokenGenerator();
+        _tokenGenerator = tokenGenerator;
     }
 
     [HttpGet]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(Policy = "User")]
     public IActionResult GetListUser ()
     {
         var res = _repository.GetListUser();
@@ -31,7 +32,7 @@ public class UserController : ControllerBase
 
     [HttpGet("{id}")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Authorize(Policy = "Admin")]
+    [Authorize(Policy = "User")]
     public IActionResult GetUserById(int id)
     {
         var res = _repository.GetUserById(id);
@@ -53,10 +54,8 @@ public class UserController : ControllerBase
         return Ok(new { message = "User deleted" });
     }
 
-
     [HttpPut("{id}")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Authorize(Policy = "User")]
     public IActionResult UpdateUser(int id, User updatedUser)
     {
         var res = _repository.UpdateUser(id, updatedUser);
@@ -66,7 +65,7 @@ public class UserController : ControllerBase
         return Ok(res);
     }
 
-    [HttpPost("{login}")]
+    [HttpPost("login")]
     [AllowAnonymous]
     public IActionResult Login(UserDTO loginDTO)
     {
@@ -110,14 +109,13 @@ public class UserController : ControllerBase
     }
 
     // Usado quando o usuário deseja alterar a senha enquanto ainda está logado no sistema.
-    [HttpPost("change-password")]
+    [HttpPost("change-password/{id}")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Authorize(Policy="User")]
-    public IActionResult ChangePassword(ChangePasswordDTO changePasswordDTO)
+    public IActionResult ChangePassword(int id, ChangePasswordDTO changePasswordDTO)
     {
-        var UserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-
-        if (!_repository.ChangePassword(UserId, changePasswordDTO.CurrentPassword, changePasswordDTO.NewPassword))
+        Boolean passwordChanged = _repository.ChangePassword(id, changePasswordDTO.CurrentPassword, changePasswordDTO.NewPassword);
+        if (passwordChanged == false)
         {
             return BadRequest(new { message = "Senha atual incorreta" });
         }
@@ -127,6 +125,7 @@ public class UserController : ControllerBase
 
     // Usado quando o usuário esqueceu a senha.
     [HttpPost("forgot-password")]
+    [AllowAnonymous]
     public IActionResult ForgotPassword([FromBody] ForgotPasswordDTO forgotPasswordDTO)
     {
         var user = _repository.GetUserByEmail(forgotPasswordDTO.Email);
@@ -138,7 +137,7 @@ public class UserController : ControllerBase
         var token = _tokenGenerator.Generate(user);
         // Lógica para enviar email com o token
         
-        return Ok(new { message = "Password reset link has been sent to your email." });
+        return Ok(new { token });
     }
     // Geralmente faz parte do processo de forgot password.
     [HttpPost("reset-password")]

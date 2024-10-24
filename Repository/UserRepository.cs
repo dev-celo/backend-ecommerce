@@ -85,8 +85,10 @@ public class UserRepository
         }
 
         // Verifica se a senha atual fornecida corresponde ao hash armazenado
-        var passwordHash = CustomPasswordHasher.HashPassword(currentPassword, out _);
-        if (user.PasswordHash != passwordHash)
+        string storedSalt = user.Salt;
+        string storedHash = user.PasswordHash;
+        var passwordIsEquals = CustomPasswordHasher.VerifyPassword(currentPassword, storedSalt, storedHash);
+        if (!passwordIsEquals)
         {
             return false; // Senha atual incorreta
         }
