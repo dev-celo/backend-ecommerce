@@ -47,6 +47,12 @@ builder.Services.AddScoped<TokenGenerator>();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var DbContext = scope.ServiceProvider.GetRequiredService<EcommerceContext>();
+    DatabaseInitializer.Initialize(DbContext);
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
