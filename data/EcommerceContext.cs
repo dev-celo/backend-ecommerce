@@ -31,9 +31,9 @@ public class EcommerceContext : DbContext
             .HasForeignKey(oi => oi.OrderId);
 
         modelBuilder.Entity<OrderItem>()
-            .HasOne(oi => oi.Product)
-            .WithMany(p => p.OrderItems)
-            .HasForeignKey(oi => oi.ProductId);
+            .HasOne(oi => oi.Product)    // Cada OrderItem tem um Product
+            .WithMany()                  // Product não possui uma coleção de OrderItems
+            .HasForeignKey(oi => oi.ProductId);  // A chave estrangeira é ProductId
 
         modelBuilder.Entity<Product>()
             .HasOne(p => p.Category)
